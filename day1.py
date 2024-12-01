@@ -1,3 +1,5 @@
+from more_itertools import *
+
 SAMPLE = """3   4
 4   3
 2   5
@@ -5,19 +7,20 @@ SAMPLE = """3   4
 3   9
 3   3"""
 
+def parse(input):
+    lines = input.splitlines()
+    pairs = ([int(x) for x in line.split()] for line in lines)
+    left, right = (sorted(l) for l in unzip(pairs))
+    return left, right
 
 def part1(input):
-    lines = input.splitlines()
-    left = sorted([int(line.split()[0]) for line in lines])
-    right = sorted([int(line.split()[1]) for line in lines])
-    distances = [ abs(a - b) for a, b in zip(left, right)]
+    left, right = parse(input)
+    distances = [ abs(a - b) for a, b in zip(left, right) ]
     return sum(distances)
 
 def part2(input):
-    lines = input.splitlines()
-    left = sorted([int(line.split()[0]) for line in lines])
-    right = sorted([int(line.split()[1]) for line in lines])
-    scores = [ sum([ a for b in right if a == b ]) for a in left ]
+    left, right = parse(input)
+    scores = [ a * right.count(a) for a in left ]
     return sum(scores)
 
 INPUT = open("day1.txt", "r").read()
