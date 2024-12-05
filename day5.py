@@ -1,6 +1,7 @@
 from itertools import *
 from more_itertools import *
 import re
+from functools import partial, cmp_to_key
 
 SAMPLE = """47|53
 97|13
@@ -53,29 +54,20 @@ def part1(input):
             result += update[len(update) // 2]
     return result
 
-def reorder(update, rules):
-    used_rules = []
-    for rule in rules:
-        if rule[0] in update and rule[1] in update:
-            used_rules.append(rule)
-    result = []
-    rights = set( rule[1] for rule in used_rules )
-    while len(result) < len(update):
-        for left, right in used_rules:
-            if left not in result and left not in rights:
-                result.append(left)
-                rights = set( rule[1] for rule in used_rules if rule[0] not in result )
-                break
-        if len(rights) == 0:
-            result.extend(l for l in update if l not in result)
-    return result
+def compare(rules, a, b):
+    if [a, b] in rules:
+        return -1
+    if [b, a] in rules:
+        return 1
+    return 0
 
 def part2(input):
     rules, updates = parse(input)
     result = 0
+    sort_key = cmp_to_key(partial(compare, rules))
     for update in updates:
         if not check(update, rules):
-            sorted_update = reorder(update, rules)
+            sorted_update = sorted(update, key = sort_key)
             assert check(sorted_update, rules)
             result += sorted_update[len(sorted_update) // 2]
     return result
