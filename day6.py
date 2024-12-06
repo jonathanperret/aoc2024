@@ -55,13 +55,11 @@ def part1(input):
 
     return len(visited)
 
-def check(initial_pos, width, height, obstacles):
-    pos = initial_pos
-    direction = (-1, 0)
-    visited = set()
+def check(pos, direction, width, height, obstacles, visited):
     while pos[0] >= 0 and pos[0] < height and pos[1] >= 0 and pos[1] < width:
         posdir = (pos, direction)
         if posdir in visited:
+            # dump(pos, width, height, obstacles, set(v[0] for v in visited))
             return True
         visited.add(posdir)
         nextpos = ( pos[0] + direction[0], pos[1] + direction[1] )
@@ -76,19 +74,23 @@ def part2(input):
     loopers = set()
     pos = initial_pos
     direction = (-1, 0)
-    while pos[0] >= 0 and pos[0] < height and pos[1] >= 0 and pos[1] < width:
-        if pos != initial_pos \
-           and pos not in loopers \
-           and check(initial_pos, width, height, obstacles.union([pos])):
-            print("looping with ", nextpos)
-            loopers.add(pos)
+    visited = set()
+    tested = set()
+    while True:
         nextpos = ( pos[0] + direction[0], pos[1] + direction[1] )
-        if nextpos in obstacles:
+        if nextpos[0] < 0 or nextpos[0] >= height \
+                or nextpos[1] < 0 or nextpos[1] >= width:
+            break
+        elif nextpos in obstacles:
             direction = ( direction[1], -direction[0] )
         else:
+            if nextpos not in tested:
+                if check(pos, direction, width, height, obstacles.union([nextpos]), set(visited)):
+                    # print("looping with ", nextpos)
+                    loopers.add(nextpos)
+            tested.add(nextpos)
+            visited.add((pos, direction))
             pos = nextpos
-
-    # dump(pos, width, height, obstacles, set(v[0] for v in visited))
 
     return len(loopers)
 
