@@ -5,6 +5,7 @@ from functools import partial, cmp_to_key
 from collections import defaultdict
 from math import gcd
 from heapq import *
+import timeit
 
 SAMPLE = """2333133121414131402
 """
@@ -78,3 +79,6 @@ if __name__ == '__main__':
     result = part2(INPUT)
     print("part2:", result)
     assert result == 6381624803796
+
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
