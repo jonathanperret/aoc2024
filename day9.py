@@ -4,6 +4,7 @@ import re
 from functools import partial, cmp_to_key
 from collections import defaultdict
 from math import gcd
+from heapq import *
 
 SAMPLE = """2333133121414131402
 """
@@ -37,35 +38,35 @@ def part1(input):
     return checksum(blocks)
 
 def part2(input):
-    _, spans = parse(input)
-    freespans = []
+    spans = list(map(int, input.strip()))
+
     files = []
+    freedict = defaultdict(list)
     start = 0
     for i, l in enumerate(spans):
         if i % 2 == 0:
             files.append((start, l))
         else:
-            freespans.append((start, l))
+            freedict[l].append(start)
         start += l
-    for i in reversed(range(len(files))):
-        start, length = files[i]
-        for fi, (fstart, flen) in enumerate(freespans):
-            if fstart >= start:
-                break
-            if flen >= length:
-                if flen == length:
-                    del freespans[fi]
-                else:
-                    freespans[fi] = (fstart + length, flen - length)
-                files[i] = (fstart, length)
-                break
 
-    blocks = [-1] * sum(spans)
-    for i, (start, length) in enumerate(files):
-        for j in range(length):
-            blocks[start + j] = i
+    for fileid in reversed(range(len(files))):
+        start, length = files[fileid]
+        best = min(((ss[0], l) for l, ss in freedict.items()
+                    if l >= length and len(ss)>0 and ss[0] < start),
+                   key=lambda p: p[0], default=None)
+        if best:
+            beststart, bestlen = best
+            files[fileid] = (beststart, length)
+            heappop(freedict[bestlen])
+            remaininglen = bestlen - length
+            if remaininglen > 0:
+                heappush(freedict[remaininglen], beststart + length)
 
-    return checksum(blocks)
+    csum = sum(fileid * (start * length + length * (length - 1) // 2)
+               for fileid, (start, length) in enumerate(files))
+
+    return csum
 
 if __name__ == '__main__':
     INPUT = open("day9.txt", "r").read()
