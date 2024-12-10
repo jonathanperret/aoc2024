@@ -18,23 +18,19 @@ SAMPLE = """89010123
 """
 
 def neighbors(i, j):
-    return [(i-1, j),
-            (i  , j-1), (i  , j+1),
-            (i+1, j)]
+    return [(i-1, j), (i, j-1), (i, j+1), (i+1, j)]
 
-def score(matrix, startpos):
+def score(matrix, startpos, allpaths=False):
     visited = set([startpos])
     edge = [ startpos ]
-    (start_i, start_j) = startpos
     height = len(matrix)
     width = len(matrix[0])
     result = 0
     while len(edge) > 0:
-        pos = edge.pop()
-        i, j = pos
-        for next_i, next_j in neighbors(*pos):
+        i, j = edge.pop()
+        for next_i, next_j in neighbors(i, j):
             if next_i >= 0 and next_i < height and next_j >= 0 and next_j < width \
-               and (next_i, next_j) not in visited \
+               and (allpaths or (next_i, next_j) not in visited) \
                and matrix[next_i][next_j] == matrix[i][j] + 1:
                 visited.add((next_i, next_j))
                 if matrix[next_i][next_j] == 9:
@@ -42,27 +38,6 @@ def score(matrix, startpos):
                 else:
                     edge.append((next_i, next_j))
     return result
-
-def rate(matrix, startpos):
-    visited = set([startpos])
-    edge = [ startpos ]
-    (start_i, start_j) = startpos
-    height = len(matrix)
-    width = len(matrix[0])
-    result = 0
-    paths = defaultdict(lambda: 0)
-    while len(edge) > 0:
-        pos = edge.pop()
-        i, j = pos
-        for next_i, next_j in neighbors(*pos):
-            if next_i >= 0 and next_i < height and next_j >= 0 and next_j < width \
-               and matrix[next_i][next_j] == matrix[i][j] + 1:
-                if matrix[next_i][next_j] == 9:
-                    result += 1
-                else:
-                    edge.append((next_i, next_j))
-    return result
-
 
 def part1(input):
     matrix = [ list(map(int, line)) for line in input.splitlines() ]
@@ -79,7 +54,7 @@ def part2(input):
     for i, row in enumerate(matrix):
         for j, cell in enumerate(row):
             if cell == 0:
-                result += rate(matrix, (i, j))
+                result += score(matrix, (i, j), allpaths=True)
     return result
 
 if __name__ == '__main__':
@@ -93,5 +68,5 @@ if __name__ == '__main__':
     print("part2:", result)
     assert result == 1657
 
-    #num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
-    #print("time=", total / num)
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
