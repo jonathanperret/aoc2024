@@ -79,6 +79,12 @@ def part2(input):
 
     return result
 
+def test_part1():
+    assert part1(SAMPLE) == 1930
+
+def test_part2():
+    assert part2(SAMPLE) == 1206
+
 if __name__ == '__main__':
     INPUT = open("day12.txt", "r").read()
 
