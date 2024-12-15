@@ -71,10 +71,8 @@ def score(boxes):
 
 def trymove(i, j, di, dj, boxes, walls):
     if (i, j) in walls:
-        print("blocked")
         return False
     if (i, j) not in boxes:
-        print("done")
         return True
     # print(f"trying to move {i},{j} by {di},{dj} to {i+di},{j+dj}")
     if not trymove(i+di, j+dj, di, dj, boxes, walls):
@@ -85,8 +83,7 @@ def trymove(i, j, di, dj, boxes, walls):
 
 
 def part1(input):
-    startpos, boxes, walls, width, height, moves = parse(input)
-    i, j = startpos
+    (i, j), boxes, walls, width, height, moves = parse(input)
 
     for move in moves:
         if move == '^':
@@ -108,8 +105,79 @@ def part1(input):
 
     return score(boxes)
 
+
+def makeroom(i, j, di, dj, boxes, walls):
+    if (i, j) in walls:
+        return False
+
+    def movebox():
+        if dj == 0:
+            if not(makeroom(i+di, j+dj, di, dj, boxes, walls) \
+                and makeroom(i+di, j+1+dj, di, dj, boxes, walls)):
+                return False
+        elif dj < 0:
+            if not makeroom(i+di, j+dj, di, dj, boxes, walls):
+                return False
+        elif dj > 0:
+            if not makeroom(i+di, j+1+dj, di, dj, boxes, walls):
+                return False
+        boxes.remove((i, j))
+        boxes.add((i+di, j+dj))
+        return True
+
+    if (i, j) in boxes:
+        return movebox()
+    elif (i, j-1) in boxes:
+        j = j-1
+        return movebox()
+
+    return True
+
+
+def dump(pos, boxes, walls, width, height):
+    display = [
+            [
+                '#' if (i,j) in walls
+                else '@' if (i,j) == pos
+                else '[' if (i,j) in boxes
+                else ']' if (i,j-1) in boxes
+                else '.'
+                for j in range(width)
+            ]
+            for i in range(height)
+        ]
+    print('\n'.join(''.join(row) for row in display))
+
+
 def part2(input):
-    return 2
+    (i, j), boxes, walls, width, height, moves = parse(input)
+    width *= 2
+    walls = set((i, 2*j) for i, j in walls) | set((i, 2*j + 1) for i, j in walls)
+    boxes = set((i, 2*j) for i, j in boxes)
+    j *= 2
+    #dump((i, j), boxes, walls, width, height)
+
+    for step, move in enumerate(moves):
+        if move == '^':
+            di, dj = (-1, 0)
+        elif move == 'v':
+            di, dj = (1, 0)
+        elif move == '<':
+            di, dj = (0, -1)
+        elif move == '>':
+            di, dj = (0, 1)
+        if (i+di, j+dj) in walls:
+            continue
+        oldboxes = boxes.copy()
+        if makeroom(i + di, j + dj, di, dj, boxes, walls):
+            i += di
+            j += dj
+        else:
+            boxes = oldboxes
+        #print(step, move); dump((i, j), boxes, walls, width, height)
+
+    return score(boxes)
+
 
 def test_part1_1():
     assert part1(SAMPLE1) == 2028
@@ -127,9 +195,9 @@ if __name__ == '__main__':
     print("part1:", result)
     assert result == 1383666
 
-    result = part2(INPUT, 101, 103)
+    result = part2(INPUT)
     print("part2:", result)
-#    assert result == 6285
-#
-#    num, total = timeit.Timer(lambda: part2(INPUT, 101, 103)).autorange()
-#    print("time=", total / num)
+    assert result == 1412866
+
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
