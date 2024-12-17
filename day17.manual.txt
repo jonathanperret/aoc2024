@@ -1,0 +1,15 @@
+Register A: 47006051
+Register B: 0
+Register C: 0
+
+Program: 2,4 1,3 7,5 1,5 0,3 4,3 5,5 3,0
+
+ bst a -> ra=A rb=(A % 8) rc=0
+ bxl 3 -> ra=A rb=((A % 8) ^ 3) rc=0
+ cdv b -> ra=A rb=((A % 8) ^ 3) rc=(A // (2 ** ((A % 8) ^ 3)))
+ bxl 5 -> ra=A rb=((A % 8) ^ 6) rc=(A // (2 ** ((A % 8) ^ 3)))
+ adv 3 -> ra=(A // 8) rb=((A % 8) ^ 6) rc=(A // (2 ** ((A % 8) ^ 3)))
+ bxc 3 -> ra=(A // 8) rb=(((A % 8) ^ 6) ^ (A // (2 ** ((A % 8) ^ 3)))) rc=(A // (2 ** ((A % 8) ^ 3)))
+ out b -> out (((A % 8) ^ 6) ^ (A // (2 ** ((A % 8) ^ 3)))) % 8
+ jnz 0
+
