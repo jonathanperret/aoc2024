@@ -53,7 +53,7 @@ def part1(input):
             case 4:
                 rb ^= rc
             case 5:
-                output.append(str(combo(arg) % 8))
+                output.append(combo(arg) % 8)
             case 6:
                 rb = ra // (2 ** combo(arg))
             case 7:
@@ -63,7 +63,7 @@ def part1(input):
                 pass
         print(f"{OPCODES[opcode]} {argstr[0]} -> pc={pc} ra={ra} rb={rb} rc={rc}")
 
-    return (','.join(output))
+    return (','.join(map(str, output)))
 
 
 def part2(input):
@@ -113,28 +113,30 @@ def part2(input):
             print(" FOUND")
             return True
 
-
     if program == [2,4,1,3,7,5,1,5,0,3,4,3,5,5,3,0]:
-        print("cheating")
-        candidates = (a << 33 | b
-                      for a in range(100000000)
-                      for b in [0o66052247155, 0o66052247277])
-        for ra0 in candidates:
-            fail = False
-            ra = ra0
-            for i, op in enumerate(program):
-                out = (((ra & 7) ^ 6) ^ (ra >> ((ra & 7) ^ 3))) & 7
-                ra = ra >> 3
-                if out != op:
-                    if i > 13:
-                        print(f"{oct(ra0)} fails at {i}")
-                    fail = True
-                    break
-            if not fail:
-                print(f"found {ra0} ({oct(ra0)})")
-                break
+        def magic(ra):
+            d = ra & 7
+            out = d ^ 6 ^ ((ra >> (d ^ 3)) & 7)
+            return out
 
-        return ra0
+        iter = 0
+        def solve(a0, pos):
+            nonlocal iter
+            iter += 1
+            if pos < 0:
+                return a0
+            a0 <<= 3
+            target = program[pos]
+            for candidate in range(a0, a0 + 8):
+                if magic(candidate) == target:
+                    good = solve(candidate, pos - 1)
+                    if good:
+                        return good
+            return None
+
+        result = solve(0, len(program)-1)
+        # print(f"{iter} calls")
+        return result
 
     for ra0 in range(1000000):
         print(f"TESTING {ra0}...")
@@ -162,8 +164,9 @@ if __name__ == '__main__':
     assert result == '6,2,7,2,3,1,6,0,5'
 
     result = part2(INPUT)
-    print("part2:", result)
-    #assert result == 575
+    print("part2:", result, oct(result))
+    assert result == 0o6562166052247155
+    assert result == 236548287712877
 
-    #num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
-    #print("time=", total / num)
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
