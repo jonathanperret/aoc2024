@@ -63,7 +63,7 @@ def part2(input, size = 71, limit = 1024):
             try:
                 path = set(nx.shortest_path(g, (0, 0), (size-1, size-1)))
             except:
-                return (i,j)
+                return f"{i},{j}"
             # print((i,j))
             # print('\n'.join(''.join(['O' if (i,j) in path
             #                          else '.' if g.has_node((i,j))
@@ -78,7 +78,7 @@ def test_part1():
 
 
 def test_part2():
-    assert part2(SAMPLE, 7, 12) == (6,1)
+    assert part2(SAMPLE, 7, 12) == '6,1'
 
 
 if __name__ == '__main__':
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     result = part2(INPUT)
     print("part2:", result)
-    #assert result == 236548287712877
+    assert result == '64,54'
 
-    #num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
-    #print("time=", total / num)
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
