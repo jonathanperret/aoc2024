@@ -64,6 +64,11 @@ def part2(input, size = 71, limit = 1024):
                 path = set(nx.shortest_path(g, (0, 0), (size-1, size-1)))
             except:
                 return (i,j)
+            # print((i,j))
+            # print('\n'.join(''.join(['O' if (i,j) in path
+            #                          else '.' if g.has_node((i,j))
+            #                          else '#'
+            #                          for j in range(size)]) for i in range(size)))
 
     return None
 
