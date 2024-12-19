@@ -47,7 +47,6 @@ def part2(input):
 
     @functools.cache
     def make(design):
-        print(design)
         if len(design) == 0:
             return 1
         return sum(make(design[len(towel):])
