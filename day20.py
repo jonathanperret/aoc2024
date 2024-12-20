@@ -29,68 +29,37 @@ SAMPLE = """###############
 
 def solve(input, max_cheat_len=20, limit=100):
     matrix = [ list(line) for line in input.splitlines() ]
-    walls = { (i,j)
-             for i, row in enumerate(matrix)
-             for j, cell in enumerate(row)
-             if cell == '#' }
+    g = nx.grid_2d_graph(len(matrix), len(matrix[0]))
     for i, row in enumerate(matrix):
         for j, cell in enumerate(row):
             if cell == 'S':
                 start = (i,j)
             elif cell == 'E':
                 end = (i,j)
+            elif cell == '#':
+                g.remove_node((i,j))
 
-    g = nx.grid_2d_graph(len(matrix), len(matrix[0]))
-    print(g)
-    for (i,j) in walls:
-        g.remove_node((i,j))
-    print(g)
-
-    max_len = nx.shortest_path_length(g, start, end)
-    print("non-cheating:", max_len)
-
-
-    paths_from_start = nx.single_source_shortest_path_length(g, start)
-    # print(f"paths_from_start: {paths_from_start}")
-    paths_to_end = nx.single_source_shortest_path_length(g, end)
-    # print(f"paths_to_end: {paths_to_end}")
+    path = nx.shortest_path(g, start, end)
+    path_nodes = { pos: n for n, pos in enumerate(path) }
 
     cheats = defaultdict(set)
-    for i, row in enumerate(matrix):
-        for j, cell in enumerate(row):
-            if cell != '#':
-                for di in range(max_cheat_len + 1):
-                    for dj in range(max_cheat_len + 1 - di):
-                        try:
-                            new_cell = matrix[i+di][j+dj]
-                        except IndexError:
-                            continue
-                        if new_cell != '#':
-                            new_pos = (i+di, j+dj)
+    for start_index, (i1, j1) in enumerate(path):
+        for di in range(-max_cheat_len, max_cheat_len + 1):
+            i2 = i1 + di
+            max_dj = max_cheat_len - abs(di)
+            for dj in range(-max_dj, max_dj + 1):
+                j2 = j1 + dj
+                if (i2, j2) in path_nodes:
+                    end_index = path_nodes[(i2, j2)]
+                    if end_index > start_index:
+                        cheat_len = abs(di) + abs(dj)
+                        saved = end_index - start_index - cheat_len
+                        if saved > 0:
+                            cheats[saved].add((start_index, end_index))
 
-                            to_cell = paths_from_start[(i,j)]
-                            rest = paths_to_end[new_pos]
-                            total = to_cell + di + dj + rest
-                            saved = max_len - total
-                            if saved > 0:
-                                cheats[saved].add(((i,j), new_pos))
-
-                            to_cell = paths_from_start[new_pos]
-                            rest = paths_to_end[(i,j)]
-                            total = to_cell + di + dj + rest
-                            saved = max_len - total
-                            if saved > 0:
-                                cheats[saved].add(((i,j), new_pos))
-
-
-
-    result = 0
-    for saved in sorted(cheats.keys()):
-        print(saved, len(cheats[saved]))
-        if saved >= limit:
-            result += len(cheats[saved])
-
-    return result
+    return sum(len(cheatset)
+               for saved, cheatset in cheats.items()
+               if saved >= limit)
 
 
 def part1(input, limit = 100):
@@ -119,9 +88,7 @@ if __name__ == '__main__':
 
     result = part2(INPUT)
     print("part2:", result)
-    # 266594 too low
-    # 558948 too low
-    #assert result == 724388733465031
+    assert result == 1013106
 
-    #num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
-    #print("time=", total / num)
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
