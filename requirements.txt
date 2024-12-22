@@ -1,2 +1,3 @@
 more-itertools==10.5.0
 pytest-watch==4.2.0
+networkx==3.4.2
