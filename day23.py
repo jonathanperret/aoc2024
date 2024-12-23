@@ -47,21 +47,35 @@ td-yn
 def parse(input):
     pairs = [ line.split('-') for line in input.splitlines() ]
     g = nx.Graph()
-    for a,b in pairs:
-        g.add_edge(a, b)
+    for a,b in pairs: g.add_edge(a, b)
     return g
 
 
 def part1(input):
-    edges = sorted(tuple(sorted(line.split('-'))) for line in input.splitlines())
+    P = 26
+    P2 = P*P
 
-    return sum(
-                1
-                for a, b in edges
-                for _, c in edges[bisect.bisect_left(edges, (b, '')):bisect.bisect_right(edges, (b, 'zz'))]
-                if a[0] == 't' or b[0] =='t' or c[0] == 't'
-                if edges[bisect.bisect_left(edges, (a, c))] == (a, c)
-              )
+    def O(a):
+        return ord(a)-97
+
+    edges = sorted(
+            P2 * (P * O(a[0]) + O(a[1])) + (P * O(b[0]) + O(b[1]))
+            for a, b in (sorted(line.split('-')) for line in input.splitlines()))
+
+    result = 0
+    for ab in edges:
+        a, b = divmod(ab, P2)
+        hast = P*O('t') <= a < P*O('u') or P*O('t') <= b < P*O('u')
+        for bc in edges[
+                bisect.bisect_left(edges, P2*b +  (O('t')*P if not hast else 0))
+                :
+                bisect.bisect_right(edges, P2*b +  (O('u')*P-1 if not hast else P2))
+            ]:
+            ac = (a - b) * P2 + bc
+            if edges[bisect.bisect_left(edges, ac)] == ac:
+                result += 1
+
+    return result
 
 
 def part2(input):
