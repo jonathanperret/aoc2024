@@ -8,6 +8,7 @@ from heapq import *
 import timeit
 import functools
 import networkx as nx
+import bisect
 
 SAMPLE = """kh-tc
 qp-kh
@@ -52,10 +53,15 @@ def parse(input):
 
 
 def part1(input):
-    g = parse(input)
+    edges = sorted(tuple(sorted(line.split('-'))) for line in input.splitlines())
 
-    cliques = (c for c in nx.enumerate_all_cliques(g) if len(c) == 3)
-    return sum(any(n.startswith('t') for n in c) for c in cliques)
+    return sum(
+                1
+                for a, b in edges
+                for _, c in edges[bisect.bisect_left(edges, (b, '')):bisect.bisect_right(edges, (b, 'zz'))]
+                if a[0] == 't' or b[0] =='t' or c[0] == 't'
+                if edges[bisect.bisect_left(edges, (a, c))] == (a, c)
+              )
 
 
 def part2(input):
@@ -80,6 +86,9 @@ if __name__ == '__main__':
     result = part1(INPUT)
     print("part1:", result)
     assert result == 1476
+
+    num, total = timeit.Timer(lambda: part1(INPUT)).autorange()
+    print("time=", total / num)
 
     result = part2(INPUT)
     print("part2:", result)
