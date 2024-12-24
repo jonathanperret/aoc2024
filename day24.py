@@ -59,6 +59,17 @@ tgd XOR rvg -> z12
 tnw OR pbm -> gnj
 """
 
+def parse(input):
+    initials, rules = input.split('\n\n')
+    initial_values = {vs[0]: int(vs[1])
+                      for line in initials.splitlines()
+                      for vs in [line.split(': ')]}
+    rules = {vs[4]: (vs[0], vs[1], vs[2])
+                     for line in rules.splitlines()
+                     for vs in [line.split(' ')]}
+    return rules, initial_values
+
+
 def compute(wire, rules, initial_values):
     if wire in rules:
         rule = rules[wire]
@@ -70,27 +81,19 @@ def compute(wire, rules, initial_values):
             case 'XOR':
                 return compute(rule[0], rules, initial_values) ^ compute(rule[2], rules, initial_values)
             case _:
-                raise Exception(f"unknown rule {rule[1]}")
+                raise Exception(f"unknown operator {rule[1]}")
     else:
         return initial_values[wire]
 
 
 def part1(input):
-    initials, rules = input.split('\n\n')
-    initial_values = {vs[0]: int(vs[1])
-                      for line in initials.splitlines()
-                      for vs in [line.split(': ')]}
-    rules = {vs[4]: (vs[0], vs[1], vs[2])
-                     for line in rules.splitlines()
-                     for vs in [line.split(' ')]}
+    rules, initial_values = parse(input)
 
-    bits = []
     power = 1
     result = 0
     for wire in sorted(rules.keys()):
         if wire.startswith('z'):
             bit = compute(wire, rules, initial_values)
-            bits.append(bit)
             result += power * bit
             power *= 2
 
@@ -98,15 +101,72 @@ def part1(input):
 
 
 def part2(input):
-    return 2
+    rules, initial_values = parse(input)
+
+    expecteds = {}
+    oldleft = ""
+    for wire in sorted(rules.keys()):
+        if not wire.startswith("z"):
+            continue
+        bit = int(wire[1:])
+        if bit == 0:
+            expr = "(x00 XOR y00)"
+        else:
+            if bit == 1:
+                left = f"(x{bit-1:02} AND y{bit-1:02})"
+            else:
+                left = f"(({oldleft} AND (x{bit-1:02} XOR y{bit-1:02})) OR (x{bit-1:02} AND y{bit-1:02}))"
+            oldleft = left
+            if f"z{bit+1:02}" in rules:
+                expr = f"({left} XOR (x{bit:02} XOR y{bit:02}))"
+            else:
+                expr = left
+        expecteds[wire] = expr
+
+    def make_expr(wire0):
+        seen = set()
+        def recur(wire):
+            if wire not in rules:
+                return wire
+            if wire in seen:
+                return "LOOP"
+            seen.add(wire)
+            rule = rules[wire]
+            expr_left = recur(rule[0])
+            expr_right = recur(rule[2])
+            expr_left, expr_right = sorted((expr_left, expr_right))
+            return f"({expr_left} {rule[1]} {expr_right})"
+
+        return recur(wire0), seen
+
+    def swap(a,b):
+        rules[a], rules[b] = rules[b], rules[a]
+
+    swapped = set()
+    swappable = set(rules.keys())
+    for wire in sorted(rules.keys()):
+        if not wire.startswith('z'):
+            continue
+        expected = expecteds[wire]
+        expr, used = make_expr(wire)
+        if expr != expected:
+            print("fixing", wire)
+            for a, b in distinct_combinations(swappable, 2):
+                swap(a, b)
+                expr, used = make_expr(wire)
+                if expr == expected:
+                    print(f"{wire} fixed by {a} <-> {b}")
+                    swapped |= { a, b }
+                    break
+                else:
+                    swap(a, b)
+        swappable -= used
+
+    return ','.join(sorted(swapped))
 
 
 def test_part1():
     assert part1(SAMPLE) == 2024
-
-
-def test_part2():
-    assert part2(SAMPLE) == 2
 
 
 if __name__ == '__main__':
@@ -115,14 +175,11 @@ if __name__ == '__main__':
 
     result = part1(INPUT)
     print("part1:", result)
-    # assert result == 1476
+    assert result == 41324968993486
 
-    # num, total = timeit.Timer(lambda: part1(INPUT)).autorange()
-    # print("time=", total / num)
+    result = part2(INPUT)
+    print("part2:", result)
+    assert result == 'bmn,jss,mvb,rds,wss,z08,z18,z23'
 
-    # result = part2(INPUT)
-    # print("part2:", result)
-    # assert result == 'ca,dw,fo,if,ji,kg,ks,oe,ov,sb,ud,vr,xr'
-
-    # num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
-    # print("time=", total / num)
+    num, total = timeit.Timer(lambda: part2(INPUT)).autorange()
+    print("time=", total / num)
